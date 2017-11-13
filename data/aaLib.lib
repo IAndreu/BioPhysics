@@ -198,6 +198,25 @@ HIE  CD2  C     -0.2207
 HIE  HD2  H      0.1862
 HIE  C    C      0.5973
 HIE  O    O     -0.5679
+# Histidine E-H HIS=HIE
+HIS  N    N     -0.4157
+HIS  H    HN     0.2719
+HIS  CA   C     -0.0581
+HIS  HA   H      0.1360
+HIS  CB   C     -0.0074
+HIS  HB1  H      0.0367
+HIS  HB2  H      0.0367
+HIS  HB3  H      0.0367
+HIS  CG   C      0.1868
+HIS  ND1  N     -0.5432
+HIS  CE1  C      0.1635
+HIS  HE1  H      0.1435
+HIS  NE2  N     -0.2795
+HIS  HE2  HN     0.3339
+HIS  CD2  C     -0.2207
+HIS  HD2  H      0.1862
+HIS  C    C      0.5973
+HIS  O    O     -0.5679
 # Histidine +
 HIP  N    N     -0.3479
 HIP  H    HN     0.2747
