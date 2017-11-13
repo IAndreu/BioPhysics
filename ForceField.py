@@ -20,7 +20,7 @@ class VdwParamset():
             self.atTypes[data[0]]=AtType(data)
         self.ntypes = len(self.atTypes)
         fh.close()
- 
+
 class AtType():
     def __init__(self,data):
         self.id   = data[0]
@@ -29,7 +29,7 @@ class AtType():
         self.mass = float(data[3])
         self.fsrf = float(data[4])
         self.rvdw = self.sig * 0.5612
+# Decomposition Based on Good-Hope rule sigij = sqrt(sigi * sigj and epsij = sqrt(eps1*epsj)
         self.avdw = 2 * math.sqrt (self.eps) * self.sig**6
         self.cvdw = 2 * math.sqrt (self.eps) * self.sig**3
 
-        
