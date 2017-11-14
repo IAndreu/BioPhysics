@@ -8,10 +8,9 @@ __date__ = "$29-ago-2017 16:14:26$"
 
 from Bio.PDB.NeighborSearch import NeighborSearch
 from Bio.PDB.PDBParser import PDBParser
-
-import StructureWrapper
-import ForceField
-import ResLib
+from StructureWrapper import Atom,Residue
+from ForceField import VdwParamset
+from ResLib import  ResiduesDataLib
 
 import sys
 import argparse
@@ -83,10 +82,10 @@ def main():
 
     
     #Load Vdw Parameters
-    ff = ForceField.VdwParamset(vdwprm)
+    ff = VdwParamset(vdwprm)
     print (ff.ntypes,'atom types loaded')
     #Load res Library
-    rl = ResLib.ResiduesDataLib(reslib)
+    rl = ResiduesDataLib(reslib)
     print (rl.nres,'residue types loaded')
 
     if not pdb_path:
@@ -124,30 +123,30 @@ def main():
     for at1, at2 in nbsearch.search_all(HBLNK):
         if at1.get_parent() == at2.get_parent():
             continue
-        if at1.get_serial_number() > at2.get_serial_number():
-            continue
  #Discard covalents and neighbours
         if (at1-at2) < COVLNK:
             continue
-        if at2.get_parent().id[1] - at1.get_parent().id[1] == 1:
+        if abs(at2.get_parent().id[1] - at1.get_parent().id[1]) == 1:
             continue
 # remove waters
         if nowats:
             if at1.get_parent().get_resname() in waternames \
                 or at2.get_parent().get_resname() in waternames:
                 continue
-        Atom1 = StructureWrapper.Atom(
+        Atom1 = Atom(
             at1, 1, 
             rl.getParams(at1.get_parent().get_resname(),at1.id),
             ff.atTypes
         )
-        Atom2 = StructureWrapper.Atom(
+        Atom2 = Atom(
             at2,1,
             rl.getParams(at2.get_parent().get_resname(),at2.id),
             ff.atTypes
         )
-
-        hblist.append([Atom1,Atom2])
+        if at1.get_serial_number() < at2.get_serial_number():
+            hblist.append([Atom1,Atom2])
+        else:
+            hblist.append([Atom2,Atom1])
 
     print ()
     print ("Polar contacts")
@@ -167,8 +166,8 @@ def main():
     # make list of Residue pairs
     resList = []
     for hb in hblist:
-        r1 = StructureWrapper.Residue(hb[0].at.get_parent(),1, ff, rl)
-        r2 = StructureWrapper.Residue(hb[1].at.get_parent(),1, ff, rl)
+        r1 = Residue(hb[0].at.get_parent(),1, ff, rl)
+        r2 = Residue(hb[1].at.get_parent(),1, ff, rl)
         if [r1,r2] not in resList:
             resList.append([r1,r2])
     
