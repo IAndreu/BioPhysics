@@ -14,6 +14,7 @@ from ResLib import  ResiduesDataLib
 
 import sys
 import argparse
+import math
 
 COVLNK = 2.0
 HBLNK  = 3.5
@@ -166,22 +167,51 @@ def main():
 # Making list or residue pairs to avoid repeated pairs
     respairs = []
     for hb in hblist:
-        r1 = Residue(hb[0].at.get_parent(), 1, aaLib, vdwParams)
-        r2 = Residue(hb[1].at.get_parent(), 1, aaLib, vdwParams)
-        if [r1,r2] not in respairs:
+        r1 = hb[0].at.get_parent()
+        r2 = hb[1].at.get_parent()
+        if [r1,r1] not in respairs:
             respairs.append([r1,r2])
- 
-    for rpair in sorted(respairs, key=lambda i: i[0].resNum()):            
-        eint = rpair[0].elecInt(rpair[1],diel)
-        evdw = rpair[0].vdwInt(rpair[1])
-        print (
-            '{:10} {:10} {: 8.4f} {: 8.4f} {: 8.4f}'.format(
-                rpair[0].resid(), 
-                rpair[1].resid(),
-                eint,
-                evdw,
-                eint+evdw)
-        )
+    
+    for rpair in sorted(respairs, key=lambda i: i[0].id[1]):            
+        eint=0.
+        evdw=0.
+        for at1 in rpair[0].get_atoms():
+            resid1 = rpair[0].get_resname()
+            atid1 = at1.id
+            atparam1 = aaLib.getParams(resid1,atid1)
+            vdwprm1 = vdwParams.atTypes[atparam1.atType]
+            for at2 in rpair[1].get_atoms():
+                resid2 = rpair[1].get_resname()
+                atid2 = at2.id
+                atparam2 = aaLib.getParams(resid2,atid2)
+                vdwprm2 = vdwParams.atTypes[atparam2.atType]
+                eint = eint + 332.16 * atparam1.charg * atparam2.charg/diel/(at1-at2)
+                eps = math.sqrt(vdwprm1.eps*vdwprm2.eps)
+                sig = math.sqrt(vdwprm1.sig*vdwprm2.sig)
+                evdw = evdw + 4 * eps *( (sig/(at1-at2))**12-(sig/(at1-at2))**6)
+        print (resid1,rpair[0].id[1],atid1,resid2,rpair[1].id[1],atid2,eint,evdw) 
+         
+
+
+
+# Making list or residue pairs to avoid repeated pairs
+#    for hb in hblist:
+#        r1 = Residue(hb[0].at.get_parent(), 1, aaLib, vdwParams)
+#        r2 = Residue(hb[1].at.get_parent(), 1, aaLib, vdwParams)
+#        if [r1,r2] not in respairs:
+#            respairs.append([r1,r2])
+# 
+#    for rpair in sorted(respairs, key=lambda i: i[0].resNum()):            
+#        eint = rpair[0].elecInt(rpair[1],diel)
+#        evdw = rpair[0].vdwInt(rpair[1])
+#        print (
+#            '{:10} {:10} {: 8.4f} {: 8.4f} {: 8.4f}'.format(
+#                rpair[0].resid(), 
+#                rpair[1].resid(),
+#                eint,
+#                evdw,
+#                eint+evdw)
+#        )
         
 if __name__ == "__main__":
     main()
