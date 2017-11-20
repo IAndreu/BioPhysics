@@ -8,7 +8,6 @@ __date__ = "$29-ago-2017 16:14:26$"
 
 from Bio.PDB.NeighborSearch import NeighborSearch
 from Bio.PDB.PDBParser import PDBParser
-from StructureWrapper import Atom,Residue
 from ForceField import VdwParamset
 from ResLib import  ResiduesDataLib
 
@@ -141,12 +140,12 @@ def main():
                 or at2.get_parent().get_resname() in waternames:
                 continue
                 
-        atom1 = Atom(at1,1,aaLib,vdwParams)
-        atom2 = Atom(at2,1,aaLib,vdwParams)        
+   #     atom1 = Atom(at1,1,aaLib,vdwParams)
+   #     atom2 = Atom(at2,1,aaLib,vdwParams)        
         if at1.get_serial_number() < at2.get_serial_number():
-            hblist.append([atom1, atom2])
+            hblist.append([at1, at2])
         else:
-            hblist.append([atom2, atom1])
+            hblist.append([at2, at1])
        
     print ()
     print ("Polar contacts")
@@ -154,11 +153,13 @@ def main():
             'Atom1','Atom2','Dist (A)')
     )
     
-    for hb in sorted (hblist,key=lambda i: i[0].at.get_serial_number()):
+    for hb in sorted (hblist,key=lambda i: i[0].get_serial_number()):
+        r1 = hb[0].get_parent()
+        r2 = hb[1].get_parent()
         print ('{:14} {:14} {:6.3f} '.format(
-            hb[0].atid(),
-            hb[1].atid(),
-            hb[0].at - hb[1].at
+            r1.get_resname()+' '+str(r1.id[1])+hb[0].id,
+            r2.get_resname()+' '+str(r2.id[1])+hb[0].id,
+            hb[0] - hb[1]
             )
         )
     print ()
@@ -167,9 +168,9 @@ def main():
 # Making list or residue pairs to avoid repeated pairs
     respairs = []
     for hb in hblist:
-        r1 = hb[0].at.get_parent()
-        r2 = hb[1].at.get_parent()
-        if [r1,r1] not in respairs:
+        r1 = hb[0].get_parent()
+        r2 = hb[1].get_parent()
+        if [r1,r2] not in respairs:
             respairs.append([r1,r2])
     
     for rpair in sorted(respairs, key=lambda i: i[0].id[1]):            
@@ -189,7 +190,7 @@ def main():
                 eps = math.sqrt(vdwprm1.eps*vdwprm2.eps)
                 sig = math.sqrt(vdwprm1.sig*vdwprm2.sig)
                 evdw = evdw + 4 * eps *( (sig/(at1-at2))**12-(sig/(at1-at2))**6)
-        print (resid1,rpair[0].id[1],atid1,resid2,rpair[1].id[1],atid2,eint,evdw) 
+        print (resid1,rpair[0].id[1],resid2,rpair[1].id[1],eint,evdw) 
          
 
 
