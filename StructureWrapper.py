@@ -47,7 +47,7 @@ class Residue():
             resnum = self.residue.get_parent().id + str(self.residue.id[1])
         else:
             resnum = self.residue.id[1]
-        return resnum
+        return int(resnum)
 
     def _getOneLetterResidueCode(self):
         resid = self.residue.get_resname().rstrip().lstrip()
@@ -120,9 +120,9 @@ class Atom():
         sig = math.sqrt(self.atData.sig * self.atData.sig)
         return 4 * eps * ((sig/(self.at-other.at))**12 - (sig/(self.at-other.at))**6)
 
-# optimized version, avoids getting distances twice and math.sqrt!!
+# optimized version, avoids getting distances twice and 1 math.sqrt!!
+#       eps = math.sqrt(self.atData.eps * self.atData.eps)
 #       dist = self.at-other.at
-#       eps = math.sqrt(self.atData.epq * self.atData.eps)
 #       sig2 = self.atData.sig * self.atData.sig
 #       sigr2 = sig2/dist**2
 #       return 4 * eps (sigr2**6-sigr2**3)
