@@ -47,7 +47,7 @@ class Residue():
             resnum = self.residue.get_parent().id + str(self.residue.id[1])
         else:
             resnum = self.residue.id[1]
-        return resnum
+        return int(resnum)
 
     def _getOneLetterResidueCode(self):
         resid = self.residue.get_resname().rstrip().lstrip()
