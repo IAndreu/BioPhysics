@@ -1386,6 +1386,7 @@ METN HE2  H      0.0597
 METN HE3  H      0.0597
 METN C    C      0.6123
 METN O    O     -0.5713
+# Added since Bio.PDB does not accepts 4 char ids
 MTN  N    N      0.1592
 MTN  H1   HN     0.1984
 MTN  H2   HN     0.1984
