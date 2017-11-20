@@ -8,6 +8,7 @@ __date__ = "$29-ago-2017 16:14:26$"
 
 from Bio.PDB.NeighborSearch import NeighborSearch
 from Bio.PDB.PDBParser import PDBParser
+from Bio.PDB.NACCESS import *
 from StructureWrapper import Atom,Residue
 from ForceField import VdwParamset
 from ResLib import  ResiduesDataLib
@@ -69,6 +70,13 @@ def main():
         dest='reslib',
         help='AminoAcid library'
     )
+    
+    parser.add_argument(
+        '--surf',
+        action='store_true',
+        dest='surf',
+        help='Usa ASA',
+    )
 
     parser.add_argument('pdb_path')
 
@@ -85,6 +93,7 @@ def main():
     vdwprm = args.vdwprm
     reslib = args.reslib
     diel = args.diel
+    surf = args.surf
     
 # Load VDW parameters
     vdwParams = VdwParamset(vdwprm)
@@ -113,6 +122,11 @@ def main():
 # Using Model 0 any way
     st = st[0]
 
+# Getting surfaces
+    if surf:
+        res_surfaces = NACCESS(st,naccess_binary='/data/DEVEL/BioPhysics/soft/NACCESS/naccess')
+        at_surfaces = NACCESS_atomic(st,naccess_binary='/data/DEVEL/BioPhysics/soft/NACCESS/naccess')
+        print ("Surfaces obtained from NACCESS")
 # Making a list of polar atoms
     polats = []
     if backonly:
@@ -149,17 +163,31 @@ def main():
        
     print ()
     print ("Polar contacts")
-    print ('{:13} {:13} {:6} '.format(
-            'Atom1','Atom2','Dist (A)')
-    )
+    
+    if surf:
+        print ('{:13} ({:6}) {:13} ({:6}) {:6} '.format(
+            'Atom1','Srf1','Atom2','Srf2','Dist (A)')
+        )
+    else:
+        print ('{:13} {:13} {:6} '.format(
+                'Atom1','Atom2','Dist (A)')
+        )
     
     for hb in sorted (hblist,key=lambda i: i[0].at.get_serial_number()):
-        print ('{:14} {:14} {:6.3f} '.format(
-            hb[0].atid(),
-            hb[1].atid(),
-            hb[0].at - hb[1].at
+        if surf:
+            print ('{:14} ({:6.3f}) {:14} ({:6.3f}) {:6.3f} '.format(
+                hb[0].atid(), float(hb[0].at.xtra['EXP_NACCESS']),
+                hb[1].atid(), float(hb[1].at.xtra['EXP_NACCESS']),
+                hb[0].at - hb[1].at
+                )
             )
-        )
+        else:
+            print ('{:14} {:14} {:6.3f} '.format(
+                hb[0].atid(),
+                hb[1].atid(),
+                hb[0].at - hb[1].at
+                )
+            )
     print ()
     print ("Residue interactions")
 
@@ -168,20 +196,34 @@ def main():
     for hb in hblist:
         r1 = Residue(hb[0].at.get_parent(), 1, aaLib, vdwParams)
         r2 = Residue(hb[1].at.get_parent(), 1, aaLib, vdwParams)
+        
         if [r1,r2] not in respairs:
             respairs.append([r1,r2])
  
     for rpair in sorted(respairs, key=lambda i: i[0].resNum()):            
-        eint = rpair[0].elecInt(rpair[1],diel)
         evdw = rpair[0].vdwInt(rpair[1])
-        print (
-            '{:10} {:10} {: 8.4f} {: 8.4f} {: 8.4f}'.format(
-                rpair[0].resid(), 
-                rpair[1].resid(),
-                eint,
-                evdw,
-                eint+evdw)
-        )
+        if surf:
+            srfr1 = float(rpair[0].residue.xtra['EXP_NACCESS']['all_atoms_rel'])
+            srfr2 = float(rpair[1].residue.xtra['EXP_NACCESS']['all_atoms_rel'])
+            eint = rpair[0].elecInt(rpair[1],diel)
+            print (
+                '{:10} ({:>8.3f}) {:10}  ({:>8.3f}) {:>8.4f} {:>8.4f} {:>8.4f}'.format(
+                    rpair[0].resid(), srfr1,
+                    rpair[1].resid(), srfr2,
+                    eint,
+                    evdw,
+                    eint+evdw)
+            )
+        else:
+            eint = rpair[0].elecInt(rpair[1],diel)
+            print (
+                '{:10} {:10} {: 8.4f} {: 8.4f} {: 8.4f}'.format(
+                    rpair[0].resid(), 
+                    rpair[1].resid(),
+                    eint,
+                    evdw,
+                    eint+evdw)
+            )
         
 if __name__ == "__main__":
     main()
