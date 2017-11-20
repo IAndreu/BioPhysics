@@ -16,17 +16,10 @@ class System():
     def __init__(self, dmin):
         self.parts = []
         self.d = dmin
-<<<<<<< HEAD
-        for x in range(-1,2):
-            for y in range(-1,2):
-                for z in range(-1,2):
-                    self.parts.append(Particle(x,y,z,0.))
-=======
         for x in range(-1, 2):
             for y in range(-1, 2):
                 for z in range(-1, 2):
                     self.parts.append(Particle(x, y, z, 0.))
->>>>>>> master
 
     def calcEnergy(self):
         eint = 0.
@@ -35,32 +28,6 @@ class System():
             for p2 in sys.parts:
                 if p1 == p2:
                     continue
-<<<<<<< HEAD
-                eint = eint + p1.elecInt(p2,self.d)
-                evdw = evdw + p1.vdwInt(p2,self.d)
-        return [evdw,eint]
-
-
-class Particle():
-    def __init__(self,x,y,z,c):
-        self.x=x
-        self.y=y
-        self.z=z
-        self.c=c
-
-    def distance(self,other):
-        return math.sqrt((self.x-other.x)**2+(self.y-other.y)**2+(self.z-other.z)**2)
-
-    def vdwInt(self,other,dmin):
-        f = SIG/self.distance(other)/dmin
-        return 4.*EPS * (pow(f,12)-pow(f,6))
-
-    def elecInt(self,other,dmin):
-        d = self.distance(other)*dmin
-        return 332.16*self.c*other.c/d
-
-    def __eq__(self,other):
-=======
                 eint = eint + p1.elecInt(p2, self.d)
                 evdw = evdw + p1.vdwInt(p2, self.d)
         return [evdw, eint]
@@ -85,7 +52,6 @@ class Particle():
         return 332.16 * self.c * other.c / d
 
     def __eq__(self, other):
->>>>>>> master
         return self.x == other.x and self.y == other.y and self.z == other.z
 
 #if __name__ == "__main__":
@@ -100,13 +66,8 @@ for pi in sys.parts:
 print ("Evdw=", evdw-evdw0)
 for pi in sys.parts:
     pi.c = 1.
-<<<<<<< HEAD
-(evdw1,eint1) = sys.calcEnergy()
-print (evdw/eint1)
-=======
 (evdw1, eint1) = sys.calcEnergy()
 print (evdw / eint1)
->>>>>>> master
 
 
 

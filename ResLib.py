@@ -25,7 +25,7 @@ class ResiduesDataLib():
             return self.RData[resid+':'+atid]
         else:
             print ("WARNING: atom not found in library (",resid+':'+atid,')')
-            return {}
+            return Residue([resid,atid,'X',0.])
 
 class Residue():
     def __init__(self,data):

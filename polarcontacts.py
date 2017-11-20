@@ -8,9 +8,10 @@ __date__ = "$29-ago-2017 16:14:26$"
 
 from Bio.PDB.NeighborSearch import NeighborSearch
 from Bio.PDB.PDBParser import PDBParser
-from StructureWrapper import Atom,Residue
-from ForceField import VdwParamset
-from ResLib import  ResiduesDataLib
+
+import StructureWrapper
+import ForceField
+import ResLib
 
 import sys
 import argparse
@@ -39,29 +40,33 @@ def main():
         dest='backonly',
         help='Restrict to backbone'
     )
+
     parser.add_argument(
         '--nowats',
         action='store_true',
         dest='nowats',
         help='Exclude water molecules'
     )
-    parser.add_argument(
-        '--diel', 
-        type= float,
-        action='store', 
-        dest='diel',
-        default = 1.0,
-        help='Relative dielectric constant'
-    )
+    
     parser.add_argument(
         '--vdw',
+        action='store',
         dest='vdwprm',
-        help='Vdw Parameters file'
+        help='VDW Paramters file'
     )
+    
     parser.add_argument(
         '--rlib',
-        dest='reslib', 
-        help='Residue library'
+        action='store',
+        dest='reslib',
+        help='AminoAcid library'
+    )
+
+    parser.add_argument(
+        '--diel',
+        action='store',
+        dest='diel',
+        help='Relative dielectric constant'
     )
     parser.add_argument('pdb_path')
 
@@ -78,16 +83,16 @@ def main():
     vdwprm = args.vdwprm
     reslib = args.reslib
     diel = args.diel
-    
+    if diel == None:
+        diel = 1.0
+# Load VDW parameters
+    vdwParams = ForceField.VdwParamset(vdwprm)
+    print ("{} atom types loaded".format(len(vdwParams.atTypes)))
 
+# Load AA Library
+    aaLib = ResLib.ResiduesDataLib(reslib)
+    print ("{} amino acid atoms loaded".format(len(aaLib.RData)))
     
-    #Load Vdw Parameters
-    ff = VdwParamset(vdwprm)
-    print (ff.ntypes,'atom types loaded')
-    #Load res Library
-    rl = ResiduesDataLib(reslib)
-    print (rl.nres,'residue types loaded')
-
     if not pdb_path:
         parser.print_help()
         sys.exit(2)
@@ -133,25 +138,15 @@ def main():
             if at1.get_parent().get_resname() in waternames \
                 or at2.get_parent().get_resname() in waternames:
                 continue
-        Atom1 = Atom(
-            at1, 1, 
-            rl.getParams(at1.get_parent().get_resname(),at1.id),
-            ff.atTypes
-        )
-        Atom2 = Atom(
-            at2,1,
-            rl.getParams(at2.get_parent().get_resname(),at2.id),
-            ff.atTypes
-        )
         if at1.get_serial_number() < at2.get_serial_number():
-            hblist.append([Atom1,Atom2])
+            hblist.append([StructureWrapper.Atom(at1,1,aaLib,vdwParams),StructureWrapper.Atom(at2,1,aaLib,vdwParams)])
         else:
-            hblist.append([Atom2,Atom1])
-
+            hblist.append([StructureWrapper.Atom(at2,1,aaLib,vdwParams),StructureWrapper.Atom(at1,1,aaLib,vdwParams)])
+        
     print ()
     print ("Polar contacts")
-    print ('{:13} ({:4}, {:6}) {:13} ({:4}, {:6}) {:6} '.format(
-            'Atom1','Type','Charge','Atom2','type','charge','Dist (A)')
+    print ('{:13} {:13} {:6} '.format(
+            'Atom1','Atom2','Dist (A)')
     )
     for hb in sorted (hblist,key=lambda i: i[0].at.get_serial_number()):
         print ('{:14} {:14} {:6.3f} '.format(
@@ -160,28 +155,11 @@ def main():
             hb[0].at - hb[1].at
             )
         )
-    print ()
-    print ("Residue interactions")
-    
-    # make list of Residue pairs
-    resList = []
-    for hb in hblist:
-        r1 = Residue(hb[0].at.get_parent(),1, ff, rl)
-        r2 = Residue(hb[1].at.get_parent(),1, ff, rl)
-        if [r1,r2] not in resList:
-            resList.append([r1,r2])
-    
-    for rpair in sorted(resList, key=lambda i: i[0].resNum()):
-        eint = rpair[0].electrInt(rpair[1],diel)
-        evdw = rpair[0].vdwInt(rpair[1])
-        print (
-            '{:10} {:10} {: 8.4f} {: 8.4f} {: 8.4f}'.format(
-                rpair[0].resid(), 
-                rpair[1].resid(),
-                eint,
-                evdw,
-                eint+evdw)
-        )
-
+# energy calculation
+        res1 = StructureWrapper.Residue(hb[0].at.get_parent(), 1, aaLib, vdwParams)
+        res2 = StructureWrapper.Residue(hb[1].at.get_parent(), 1, aaLib, vdwParams)
+ 
+        print (res1.elecInt(res2,diel))
+        
 if __name__ == "__main__":
     main()

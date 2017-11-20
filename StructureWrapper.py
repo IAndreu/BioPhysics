@@ -1,6 +1,6 @@
 #
 # Convenient wrappers over BioPython classes
-# Include interaction energies
+# Hint: Include here interaction energies
 #
 
 __author__ = "gelpi"
@@ -21,18 +21,14 @@ class Residue():
         'THR':'T', 'VAL':'V', 'TRP':'W', 'TYR':'Y'
     }
 
-    def __init__(self, r, useChains=False, ff='', rl=''):
+    def __init__(self, r, useChains=False, rlib='', vdw=''):
         self.residue = r
-        self.useChains = useChains       
-        self.atoms = {}
-        if ff:
-            for at in r.get_atoms():
-                newat = Atom(
-                    at, 1, 
-                    rl.getParams(r.get_resname(),at.id),
-                    ff.atTypes
-                )
-                self.atoms[newat.at.id] = newat
+        self.useChains = useChains
+        if rlib:
+            self.Atoms=[]
+            for at in r:
+                newat = Atom(at,1,rlib,vdw)
+                self.Atoms.append(newat)
         
     def resid(self, compact=False):
         if self.useChains:
@@ -65,50 +61,29 @@ class Residue():
         return self.resid() == other.resid()
 
     def __lt__(self, other):
-        return self.resNum() < self.resNum()
+        return self.resnum() < self.resnum()
 
     def __str__(self):
         return self.resid()
     
-    def electrInt (self, other, diel):
-        eint = 0.
-        for at1 in self.atoms:
-            for at2 in other.atoms:
-                r = self.atoms[at1].at-other.atoms[at2].at
-                eint = eint + self.atoms[at1].electrInt(other.atoms[at2],diel,r)
+    def elecInt(self,other,diel):
+        eint=0.
+        for at1 in self.Atoms:
+            for at2 in other.Atoms:
+               eint = eint + at1.elecInt(at2,diel) 
         return eint
-    
-    def vdwInt(self,other):
-        evdw = 0.
-        for at1 in self.atoms:
-            for at2 in other.atoms:
-                r = self.atoms[at1].at-other.atoms[at2].at
-                evdw = evdw + self.atoms[at1].vdwInt(other.atoms[at2],r)
-        return evdw
 
 class Atom():
-    def __init__ (self, at, useChains=False, atData={}, atTypeData={}):
+    def __init__ (self, at, useChains=False, rlib='', vdw=''):
         self.at=at
         self.useChains=useChains
-        self.atType = ''
-        self.rvdw   = 0.
-        self.avdw   = 0.
-        self.cvdw   = 0.
-        self.sig    = 0.
-        self.eps    = 0.
-        self.mass   = 0.
-        self.fsrf   = 0.
-        self.charg  = 0.
-        if atData:
-            self.atType = atData.atType
-            self.rvdw   = atTypeData[self.atType].rvdw
-            self.avdw   = atTypeData[self.atType].avdw
-            self.cvdw   = atTypeData[self.atType].cvdw
-            self.sig    = atTypeData[self.atType].sig
-            self.eps    = atTypeData[self.atType].eps
-            self.mass   = atTypeData[self.atType].mass
-            self.fsrf   = atTypeData[self.atType].fsrf
-            self.charg  = atData.charg
+# Forcefield parameters
+        if rlib:
+            rdata = rlib.getParams(at.get_parent().get_resname(), at.id)
+            self.atType = rdata.atType
+            self.charg = rdata.charg
+            if vdw:
+                self.atData = vdw.atTypes[self.atType]
         
     def atid(self, compact=False):
         return self.resid(compact)+"."+self.at.id
@@ -127,9 +102,6 @@ class Atom():
 
     def __str__(self):
         return self.atid()
-
-    def electrInt (self, other, diel, r):
-        return 332.16 * self.charg * other.charg / diel / r
     
-    def vdwInt (self, other,r):
-        return self.avdw*other.avdw/r**12 - self.cvdw*other.cvdw/r**6
+    def elecInt(self, other, diel):
+        return 332.6 * self.charg * other.charg / diel / (self.at-other.at)

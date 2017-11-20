@@ -3,7 +3,6 @@
 # uses modified CMIP vdwprm file
 #
 import sys
-import math
 
 class VdwParamset():
     def __init__ (self, fname):
@@ -18,6 +17,7 @@ class VdwParamset():
                 continue
             data = line.split()
             self.atTypes[data[0]]=AtType(data)
+        self.atTypes['X']=AtType(['X',0.,0.,0.,0.,0.])
         self.ntypes = len(self.atTypes)
         fh.close()
 
@@ -29,7 +29,6 @@ class AtType():
         self.mass = float(data[3])
         self.fsrf = float(data[4])
         self.rvdw = self.sig * 0.5612
-# Decomposition Based on Good-Hope rule sigij = sqrt(sigi * sigj and epsij = sqrt(eps1*epsj)
-        self.avdw = 2 * math.sqrt (self.eps) * self.sig**6
-        self.cvdw = 2 * math.sqrt (self.eps) * self.sig**3
+
+
 
