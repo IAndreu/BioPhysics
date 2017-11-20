@@ -203,14 +203,19 @@ def main():
     for rpair in sorted(respairs, key=lambda i: i[0].resNum()):            
         evdw = rpair[0].vdwInt(rpair[1])
         if surf:
-            srfr1 = float(rpair[0].residue.xtra['EXP_NACCESS']['all_atoms_rel'])
-            srfr2 = float(rpair[1].residue.xtra['EXP_NACCESS']['all_atoms_rel'])
-            eint = rpair[0].elecInt(rpair[1],diel)
+            srfr1 = float(rpair[0].residue.xtra['EXP_NACCESS']['all_polar_rel'])
+            srfr2 = float(rpair[1].residue.xtra['EXP_NACCESS']['all_polar_rel'])
+            # Define 30% threshold for buried
+            if (srfr1>30.) or (srfr2>30.):
+                diel0=80.0
+            else:
+                diel0=diel
+            eint = rpair[0].elecInt(rpair[1],diel0)
             print (
-                '{:10} ({:>8.3f}) {:10}  ({:>8.3f}) {:>8.4f} {:>8.4f} {:>8.4f}'.format(
+                '{:10} ({:>8.3f}) {:10}  ({:>8.3f}) (e: {:4.1f}) {:>8.4f} {:>8.4f} {:>8.4f}'.format(
                     rpair[0].resid(), srfr1,
                     rpair[1].resid(), srfr2,
-                    eint,
+                    diel0, eint,
                     evdw,
                     eint+evdw)
             )
