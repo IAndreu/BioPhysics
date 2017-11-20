@@ -6,6 +6,8 @@
 __author__ = "gelpi"
 __date__ = "$01-nov-2017 7:17:33$"
 
+import math
+
 class Residue():
     oneLetterResidueCode = {
         'DA' :'A', 'DC' :'C', 'DG' :'G', 'DT' :'T',
@@ -25,10 +27,10 @@ class Residue():
         self.residue = r
         self.useChains = useChains
         if rlib:
-            self.Atoms=[]
+            self.atoms={}
             for at in r:
                 newat = Atom(at,1,rlib,vdw)
-                self.Atoms.append(newat)
+                self.atoms[newat.at.id] = newat
         
     def resid(self, compact=False):
         if self.useChains:
@@ -61,17 +63,24 @@ class Residue():
         return self.resid() == other.resid()
 
     def __lt__(self, other):
-        return self.resnum() < self.resnum()
+        return self.resNum() < self.resNum()
 
     def __str__(self):
         return self.resid()
     
-    def elecInt(self,other,diel):
+    def elecInt(self, other, diel):
         eint=0.
-        for at1 in self.Atoms:
-            for at2 in other.Atoms:
-               eint = eint + at1.elecInt(at2,diel) 
+        for at1 in self.atoms:
+            for at2 in other.atoms:
+               eint = eint + self.atoms[at1].elecInt(other.atoms[at2],diel) 
         return eint
+    
+    def vdwInt(self, other):
+        evdw=0.
+        for at1 in self.atoms:
+            for at2 in other.atoms:
+               evdw = evdw + self.atoms[at1].vdwInt(other.atoms[at2]) 
+        return evdw
 
 class Atom():
     def __init__ (self, at, useChains=False, rlib='', vdw=''):
@@ -104,4 +113,16 @@ class Atom():
         return self.atid()
     
     def elecInt(self, other, diel):
-        return 332.6 * self.charg * other.charg / diel / (self.at-other.at)
+        return 332.16 * self.charg * other.charg / diel / (self.at-other.at)
+
+    def vdwInt(self, other):
+        eps = math.sqrt(self.atData.eps * self.atData.eps)
+        sig = math.sqrt(self.atData.sig * self.atData.sig)
+        return 4 * eps * ((sig/(self.at-other.at))**12 - (sig/(self.at-other.at))**6)
+
+# optimized version, avoids getting distances twice and math.sqrt!!
+#       dist = self.at-other.at
+#       eps = math.sqrt(self.atData.epq * self.atData.eps)
+#       sig2 = self.atData.sig * self.atData.sig
+#       sigr2 = sig2/dist**2
+#       return 4 * eps (sigr2**6-sigr2**3)
