@@ -158,7 +158,7 @@ def main():
         r2 = hb[1].get_parent()
         print ('{:14} {:14} {:6.3f} '.format(
             r1.get_resname()+' '+str(r1.id[1])+hb[0].id,
-            r2.get_resname()+' '+str(r2.id[1])+hb[0].id,
+            r2.get_resname()+' '+str(r2.id[1])+hb[1].id,
             hb[0] - hb[1]
             )
         )
